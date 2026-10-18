@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A letter for you</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Pinyon+Script&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#1d0711;--bg2:#3a0f22;--ink:#f7e6e1;--muted:#cfa3ac;--rose:#e0a3a9;--gold:#d9b66a;--wine:#8c1d46;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;text-align:center;color:var(--ink);font:20px/1.6 "Cormorant Garamond",Georgia,"Times New Roman",serif;background:radial-gradient(ellipse at 50% 0%,var(--bg2),var(--bg) 70%) fixed}
+.script{font-family:"Pinyon Script","Snell Roundhand","Brush Script MT",cursive;font-weight:400}
+.seal{width:96px;height:96px;margin:0 auto 18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#c23a62,#7a1232 70%);box-shadow:0 8px 24px #00000080,inset 0 0 0 5px #9c2549;display:grid;place-items:center;font-size:40px;color:#f3c9d1;animation:b 2.4s ease-in-out infinite}
+@keyframes b{50%{transform:scale(1.07)}}
+h1{margin:0 0 6px;font-size:clamp(40px,10vw,60px);color:var(--rose);font-weight:400;line-height:1.1}
+p{margin:6px 0;color:var(--muted);font-style:italic}
+#box{margin-top:18px;min-height:60px;color:var(--gold)}
+input{background:#2a0d19;color:var(--ink);border:1px solid var(--gold);border-radius:999px;padding:12px 20px;font:inherit;text-align:center;width:min(300px,80vw)}
+button{margin:10px 0 0 6px;background:var(--wine);color:#fff6ee;border:1px solid var(--gold);border-radius:999px;padding:12px 24px;font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.shake{animation:s .4s}
+@keyframes s{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<main>
+  <div class="seal" aria-hidden="true">♥</div>
+  <h1 class="script" id="h">A letter for you</h1>
+  <p id="p">Opening…</p>
+  <div id="box" role="status"></div>
+</main>
+<script>
+(function(){
+var C=window.DEAREST,$=function(s){return document.querySelector(s)},id=new URLSearchParams(location.search).get("id");
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function b64(o){return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
+function fail(t){$("#p").textContent=t;$("#box").textContent=""}
+if(!C||!id){fail("This link looks incomplete. Ask them to send it again.");return}
+function get(ans){
+  return fetch(C.url+"/rest/v1/rpc/get_letter",{method:"POST",headers:{"Content-Type":"application/json",apikey:C.key,Authorization:"Bearer "+C.key},
+    body:JSON.stringify({p_id:id,p_answer:ans==null?null:ans})}).then(function(r){if(!r.ok)throw 0;return r.json()});
+}
+function who(r){if(r.to)$("#h").textContent="For "+r.to}
+var timer;
+function handle(r,ans){
+  if(r.status==="ok"){location.replace("letter.html#d="+b64(r.letter));return}
+  if(r.status==="missing"){fail("We couldn’t find this letter.");return}
+  who(r);
+  if(r.status==="locked"){
+    var t=new Date(r.until).getTime();$("#p").textContent="This letter is waiting for the right moment.";
+    (function tick(){var ms=t-Date.now();if(ms<=0){go();return}
+      var d=Math.floor(ms/864e5),h=Math.floor(ms/36e5)%24,m=Math.floor(ms/6e4)%60,s=Math.floor(ms/1e3)%60;
+      $("#box").textContent="Opens in "+(d?d+"d ":"")+h+"h "+m+"m "+s+"s";timer=setTimeout(tick,1000)})();
+  }else if(r.status==="question"){
+    $("#p").textContent="Answer this to open your letter.";
+    $("#box").innerHTML="<div>"+esc(r.question)+"</div><input id='a' type='text' aria-label='Your answer'><button id='b' type='button'>Open</button>"+(r.wrong?"<div style='margin-top:10px;font-style:italic'>Not quite. Try again.</div>":"");
+    if(r.wrong){$("#box").classList.remove("shake");void $("#box").offsetWidth;$("#box").classList.add("shake")}
+    $("#b").onclick=function(){go($("#a").value)};
+    $("#a").onkeydown=function(e){if(e.key==="Enter")go($("#a").value)};
+  }
+}
+function go(ans){clearTimeout(timer);get(ans).then(function(r){handle(r,ans)}).catch(function(){fail("Something went wrong loading this letter. Please try again in a moment.")})}
+go();
+})();
+</script>
+</body>
+</html>
