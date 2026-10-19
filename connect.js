@@ -7,8 +7,8 @@
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var B = $(".builder");
   var old = $("#preview");
-  var ta = B && $("textarea", B);
-  if (!B || !old || !ta || $("#cn-ps")) return; // already loaded
+  var editor = B && ($("#letter-editor", B) || $("textarea", B));
+  if (!B || !old || !editor || $("#cn-ps")) return; // already loaded
   var nameIn = $('input[placeholder="Their name"]', B);
   var mailIn = $('input[type="email"]', B);
   var files = B.querySelectorAll('input[type="file"]');
@@ -33,7 +33,7 @@
   /* ---------- extra fields ---------- */
   var ps = document.createElement("input");
   ps.type = "text"; ps.id = "cn-ps"; ps.placeholder = "P.S. (optional)"; ps.setAttribute("aria-label", "Postscript");
-  ta.parentNode.insertBefore(ps, ta.nextSibling);
+   editor.parentNode.insertBefore(ps, editor.nextSibling);
 
   var dp = $('[data-list="extras"]', B);
   dp = dp && dp.parentNode;
@@ -56,11 +56,22 @@
   function chosen(k) {
     return [].map.call(document.querySelectorAll('[data-list="' + k + '"] .chip[aria-pressed="true"]'), function (x) { return x.textContent; });
   }
+  function letterContent() {
+    if (window.DEAREST_PAPER_UI && window.DEAREST_PAPER_UI.getContent) return window.DEAREST_PAPER_UI.getContent();
+    var text = editor.value !== undefined ? editor.value : (editor.innerText || editor.textContent || "");
+    return {
+      paperId: "original",
+      richTextHtml: window.DEAREST_RICH_TEXT ? window.DEAREST_RICH_TEXT.getHtml(editor) : "",
+      text: text
+    };
+  }
   function data(media) {
+    var content = letterContent();
     var d = {
       to: nameIn ? nameIn.value.trim() : "",
       letter: chosen("letter")[0] || "", envelope: chosen("envelope")[0] || "", stamp: chosen("stamp")[0] || "",
-      extras: chosen("extras"), text: ta.value, ps: ps.value.trim()
+      extras: chosen("extras"), paperId: content.paperId || "original",
+      richTextHtml: content.richTextHtml || "", text: content.text || "", ps: ps.value.trim()
     };
     var m = $("#cn-mode"); m = m ? m.value : "";
     if (m === "date" && $("#cn-date").value) d.unlock = { date: $("#cn-date").value };
@@ -91,7 +102,7 @@
   }
 
   btn.addEventListener("click", function () {
-    if (!ta.value.trim()) return err("Write your words in step 6 first. Only you can write them.");
+    if (!letterContent().text.trim()) return err("Write your words in step 7 first. Only you can write them.");
     var m = $("#cn-mode");
     if (m && m.value === "date" && !$("#cn-date").value) return err("Pick the date and time you want it to unlock.");
     if (m && m.value === "q" && !($("#cn-q").value.trim() && $("#cn-a").value.trim())) return err("Add both the question and its answer.");

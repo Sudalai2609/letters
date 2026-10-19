@@ -23,6 +23,7 @@
     "#lp .ln{font-size:16px;line-height:1.35;color:var(--muted,#7a4a58);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
     "#lp .ln b{color:var(--ink,#3a0f1f);font-weight:600}",
     "#lp .rd{margin-top:8px;padding:8px 16px;font-size:16px}",
+    "#lp.lp-writing{position:relative;top:auto;z-index:1}",
     "#lp-m{position:fixed;inset:0;background:#000000b3;display:none;place-items:center;z-index:100;padding:20px}",
     "#lp-m.on{display:grid}",
     "#lp-m .pp{position:relative;width:100%;max-width:440px;max-height:80vh;overflow:auto;padding:34px 28px 30px;border-radius:6px;box-shadow:0 20px 60px #00000080;font-size:20px;line-height:1.7;white-space:pre-wrap;word-wrap:break-word}",
@@ -42,6 +43,14 @@
     '<div class="ln" data-k="stamp"></div><div class="ln" data-k="extras"></div>' +
     '<button class="btn rd" type="button">Read letter</button></div>';
   host.parentNode.insertBefore(box, host.nextSibling);
+  var paperStep = $("#paper-gallery") && $("#paper-gallery").closest(".panel");
+  var writingStep = $("#letter-editor") && $("#letter-editor").closest(".panel");
+  function syncPreviewPosition() {
+    box.classList.toggle("lp-writing", !!((paperStep && paperStep.open) || (writingStep && writingStep.open)));
+  }
+  if (paperStep) paperStep.addEventListener("toggle", syncPreviewPosition);
+  if (writingStep) writingStep.addEventListener("toggle", syncPreviewPosition);
+  syncPreviewPosition();
 
   var modal = document.createElement("div");
   modal.id = "lp-m";
@@ -126,15 +135,43 @@
     if (music) extra += " · ♪";
     if (photos) extra += " · ✿ " + photos;
     line("extras", "Extras", extra);
+
+    var paperContent = window.DEAREST_PAPER_UI && window.DEAREST_PAPER_UI.getContent
+      ? window.DEAREST_PAPER_UI.getContent() : null;
+    var livePaper = document.getElementById("letter-live-content");
+    if (livePaper && paperContent && paperContent.paperId === "original") {
+      var legacyPaper = (l && find(PAPER, l)) || [0].concat(PAPER_DEFAULT);
+      livePaper.style.backgroundColor = legacyPaper[1];
+      livePaper.style.color = legacyPaper[2];
+      livePaper.style.fontFamily = legacyPaper[3] || "'Cormorant Garamond',Georgia,serif";
+      livePaper.style.setProperty("--paper-base", legacyPaper[1]);
+      livePaper.style.setProperty("--paper-ink", legacyPaper[2]);
+      livePaper.style.setProperty("--paper-font", legacyPaper[3] || "'Cormorant Garamond',Georgia,serif");
+      if (window.DEAREST_PAPER_UI.updateContrast) window.DEAREST_PAPER_UI.updateContrast();
+    }
   }
 
   /* ---------- reading the letter ---------- */
   var tx = $(".tx", modal), tags = $(".tags", modal), pp = $(".pp", modal);
   function openLetter() {
     var l = pick("letter")[0], pr = (l && find(PAPER, l)) || [0].concat(PAPER_DEFAULT);
-    var text = ($(".builder textarea") || {}).value || "";
-    pp.style.background = pr[1]; pp.style.color = pr[2]; pp.style.fontFamily = pr[3];
-    tx.innerHTML = text.trim() ? esc(text) : '<span style="opacity:.55;font-style:italic">Your words will appear here once you write them.</span>';
+    var content = window.DEAREST_PAPER_UI && window.DEAREST_PAPER_UI.getContent
+      ? window.DEAREST_PAPER_UI.getContent()
+      : { paperId: "original", richTextHtml: "", text: ($(".builder textarea") || {}).value || "" };
+    if (content.paperId && content.paperId !== "original" && window.DEAREST_PAPER_CONFIG &&
+        window.DEAREST_PAPER_CONFIG.has(content.paperId)) {
+      window.DEAREST_PAPER_CONFIG.apply(pp, content.paperId);
+    } else {
+      pp.classList.remove("paper-sheet");
+      pp.removeAttribute("data-paper-id");
+      pp.removeAttribute("data-texture");
+      pp.removeAttribute("data-edge");
+      pp.style.background = pr[1]; pp.style.color = pr[2]; pp.style.fontFamily = pr[3];
+    }
+    var safeHtml = window.DEAREST_RICH_TEXT ? window.DEAREST_RICH_TEXT.sanitize(content.richTextHtml || "") : "";
+    tx.innerHTML = safeHtml || (content.text.trim()
+      ? (window.DEAREST_RICH_TEXT ? window.DEAREST_RICH_TEXT.plainTextToHtml(content.text) : esc(content.text))
+      : '<span style="opacity:.55;font-style:italic">Your words will appear here once you write them.</span>');
     var psEl = document.getElementById("cn-ps"), psv = psEl ? psEl.value.trim() : "";
     if (psv) tx.innerHTML += '<div style="margin-top:1.2em;padding-top:.8em;border-top:1px dashed #b76e7999;font-style:italic">' + esc(psv) + "</div>";
     var bits = [].concat(pick("letter"), pick("envelope"), pick("stamp"), pick("extras"));

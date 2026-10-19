@@ -6,7 +6,8 @@
 <title>Dearest — Love letters, made by hand</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Pinyon+Script&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Pinyon+Script&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="paper-styles.css">
 <style>
 :root{
   --bg:#fbf3ee; --bg2:#f3e2dd; --ink:#3a0f1f; --muted:#7a4a58;
@@ -203,14 +204,78 @@ label.file{display:block;margin-top:12px;border:1px dashed var(--rose);border-ra
     </details>
 
     <details class="panel">
-      <summary><span class="num script">6</span><span class="t"><b>Write your words</b><small>Only you can write this part</small></span><span class="chev">›</span></summary>
+      <summary><span class="num script">6</span><span class="t"><b>Choose Your Paper</b><small>Find a sheet that feels like your words</small></span><span class="chev">›</span></summary>
+      <div class="body paper-body">
+        <div class="paper-current" aria-live="polite">
+          <span class="paper-current-kicker">Your selected paper</span>
+          <strong id="paper-current-name">Original Dearest paper</strong>
+        </div>
+        <p id="paper-contrast-status" class="paper-contrast-status" role="status">Default ink is checked for comfortable contrast. Your own colours stay unchanged.</p>
+        <div id="paper-categories" class="paper-categories" role="tablist" aria-label="Paper categories"></div>
+        <div id="paper-gallery" class="paper-gallery" role="group" aria-label="Choose a paper"></div>
+        <div class="paper-actions">
+          <button class="paper-text-button" id="paper-reset" type="button">Reset to original paper</button>
+          <button class="paper-suggestion-button" id="apply-paper-suggestion" type="button">Use suggested font &amp; ink</button>
+        </div>
+        <p class="paper-suggestion-note">The paper changes the sheet only. Apply its suggested font and ink to selected text or new words at your cursor.</p>
+      </div>
+    </details>
+
+    <details class="panel" open>
+      <summary><span class="num script">7</span><span class="t"><b>Write your words</b><small>Only you can write this part</small></span><span class="chev">›</span></summary>
       <div class="body">
-        <textarea placeholder="My dearest…" aria-label="Your letter"></textarea>
+        <div id="letter-toolbar" class="letter-toolbar" role="toolbar" aria-label="Letter formatting">
+          <div class="toolbar-group" aria-label="Text style">
+            <button type="button" data-rte-command="bold" aria-label="Bold" title="Bold"><strong>B</strong></button>
+            <button type="button" data-rte-command="italic" aria-label="Italic" title="Italic"><em>I</em></button>
+            <button type="button" data-rte-command="underline" aria-label="Underline" title="Underline"><u>U</u></button>
+            <button type="button" data-rte-command="strikeThrough" aria-label="Strikethrough" title="Strikethrough"><s>S</s></button>
+          </div>
+          <label class="toolbar-select-label"><span class="sr-only">Font family</span>
+            <select data-rte-command="fontName" aria-label="Font family">
+              <option value="Cormorant Garamond">Cormorant</option><option value="Georgia">Georgia</option><option value="Pinyon Script">Pinyon Script</option><option value="Caveat">Caveat</option><option value="Palatino Linotype">Palatino</option><option value="Verdana">Verdana</option>
+            </select>
+          </label>
+          <label class="toolbar-select-label"><span class="sr-only">Font size</span>
+            <select data-rte-command="fontSize" aria-label="Font size">
+              <option value="3">Normal</option><option value="2">Small</option><option value="4">Large</option><option value="5">Larger</option><option value="6">Very large</option>
+            </select>
+          </label>
+          <div class="toolbar-group" aria-label="Ink and highlight">
+            <label class="color-control" title="Ink color"><span aria-hidden="true">A</span><input type="color" value="#3a0f1f" data-rte-color="foreColor" aria-label="Ink color"></label>
+            <label class="color-control highlight-control" title="Highlight color"><span aria-hidden="true">H</span><input type="color" value="#f2d77b" data-rte-color="hiliteColor" aria-label="Highlight color"></label>
+          </div>
+          <div class="toolbar-group" aria-label="Paragraph alignment">
+            <button type="button" data-rte-command="justifyLeft" aria-label="Align left" title="Align left">L</button>
+            <button type="button" data-rte-command="justifyCenter" aria-label="Align centre" title="Align centre">C</button>
+            <button type="button" data-rte-command="justifyRight" aria-label="Align right" title="Align right">R</button>
+          </div>
+          <label class="toolbar-select-label toolbar-format-label"><span class="sr-only">Paragraph style</span>
+            <select data-rte-command="formatBlock" aria-label="Paragraph style">
+              <option value="p">Paragraph</option><option value="h1">Heading 1</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Quote</option>
+            </select>
+          </label>
+          <div class="toolbar-group" aria-label="Lists">
+            <button type="button" data-rte-command="insertOrderedList" aria-label="Numbered list" title="Numbered list">1.</button>
+            <button type="button" data-rte-command="insertUnorderedList" aria-label="Bulleted list" title="Bulleted list">•</button>
+          </div>
+          <div class="toolbar-group toolbar-history" aria-label="Editing history">
+            <button type="button" data-rte-command="lineBreak" aria-label="Insert line break" title="Line break">↵</button>
+            <button type="button" data-rte-command="undo" aria-label="Undo" title="Undo">↶</button>
+            <button type="button" data-rte-command="redo" aria-label="Redo" title="Redo">↷</button>
+          </div>
+        </div>
+        <div id="letter-editor" class="letter-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Your letter" data-placeholder="My dearest…"></div>
+        <textarea class="letter-compatibility" aria-hidden="true" tabindex="-1" hidden></textarea>
+        <section id="letter-live-preview" class="letter-live-preview" aria-label="Live letter preview">
+          <div class="live-preview-heading"><span>On the page</span><span class="live-preview-rule" aria-hidden="true"></span></div>
+          <article id="letter-live-content" class="letter-live-content"></article>
+        </section>
       </div>
     </details>
 
     <details class="panel">
-      <summary><span class="num script">7</span><span class="t"><b>Send by email</b><small>Their inbox, your private link</small></span><span class="chev">›</span></summary>
+      <summary><span class="num script">8</span><span class="t"><b>Send by email</b><small>Their inbox, your private link</small></span><span class="chev">›</span></summary>
       <div class="body">
         <input type="text" placeholder="Their name" aria-label="Recipient name">
         <input type="email" placeholder="Their email address" aria-label="Recipient email">
@@ -279,12 +344,12 @@ label.file{display:block;margin-top:12px;border:1px dashed var(--rose);border-ra
   });
 })();
 </script>
-  <script src="preview.js"></script>
-  <script src="connect.js"></script>
-  <script src="preview.js"></script>
-<script src="connect.js"></script>
 <script src="config.js"></script>
+<script src="paper-presets.js"></script>
+<script src="rich-text.js"></script>
+<script src="paper-ui.js"></script>
+<script src="preview.js"></script>
+<script src="connect.js"></script>
 <script src="send.js"></script>
-  <script src="themes.js"></script> 
 </body>
 </html>

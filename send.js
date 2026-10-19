@@ -5,8 +5,8 @@
    All colors are hex. */
 (function () {
   var C = window.DEAREST, $ = function (s, r) { return (r || document).querySelector(s); };
-  var B = $(".builder"), bar = B && $(".bar", B), ta = B && $("textarea", B);
-  if (!C || !bar || !ta || $("#sd-out")) return; // already loaded
+  var B = $(".builder"), bar = B && $(".bar", B), editor = B && ($("#letter-editor", B) || $("textarea", B));
+  if (!C || !bar || !editor || $("#sd-out")) return; // already loaded
   var H = { apikey: C.key, Authorization: "Bearer " + C.key };
   var nameIn = $('input[placeholder="Their name"]', B), mailIn = $('input[type="email"]', B);
   var files = B.querySelectorAll('input[type="file"]');
@@ -27,6 +27,15 @@
   function err(t) { out.innerHTML = '<p class="sd-err">' + esc(t) + "</p>"; }
   function chosen(k) { return [].map.call(document.querySelectorAll('[data-list="' + k + '"] .chip[aria-pressed="true"]'), function (x) { return x.textContent; }); }
   function val(sel) { var e = $(sel); return e ? e.value.trim() : ""; }
+  function letterContent() {
+    if (window.DEAREST_PAPER_UI && window.DEAREST_PAPER_UI.getContent) return window.DEAREST_PAPER_UI.getContent();
+    var text = editor.value !== undefined ? editor.value : (editor.innerText || editor.textContent || "");
+    return {
+      paperId: "original",
+      richTextHtml: window.DEAREST_RICH_TEXT ? window.DEAREST_RICH_TEXT.getHtml(editor) : "",
+      text: text
+    };
+  }
 
   async function up(file, id, i) {
     if (file.size > 15 * 1024 * 1024) throw new Error(file.name + " is over 15 MB. Please choose a smaller file.");
@@ -40,7 +49,8 @@
   }
 
   btn.addEventListener("click", async function () {
-    if (!ta.value.trim()) return err("Write your words in step 6 first. Only you can write them.");
+    var content = letterContent();
+    if (!content.text.trim()) return err("Write your words in step 7 first. Only you can write them.");
     var mode = val("#cn-mode"), date = val("#cn-date"), q = val("#cn-q"), a = val("#cn-a");
     if (mode === "date" && !date) return err("Pick the date and time you want it to unlock.");
     if (mode === "q" && !(q && a)) return err("Add both the question and its answer.");
@@ -50,7 +60,8 @@
       var id = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
       var d = {
         to: nameIn ? nameIn.value.trim() : "", letter: chosen("letter")[0] || "", envelope: chosen("envelope")[0] || "",
-        stamp: chosen("stamp")[0] || "", extras: chosen("extras"), text: ta.value, ps: val("#cn-ps")
+        stamp: chosen("stamp")[0] || "", extras: chosen("extras"), paperId: content.paperId || "original",
+        richTextHtml: content.richTextHtml || "", text: content.text || "", ps: val("#cn-ps")
       };
       if (files[0] && files[0].files[0]) { btn.textContent = "Uploading your song…"; d.audio = await up(files[0].files[0], id, 0); }
       if (files[1] && files[1].files.length) {
